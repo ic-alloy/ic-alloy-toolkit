@@ -17,6 +17,11 @@ This repository contains a collection of examples of how to use Alloy in an IC c
 [![Forks][forks-shield]][forks-url] [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url] [![MIT License][license-shield]](LICENSE)
 
+> [!TIP]
+> 
+> Live demo: <https://u4yi6-xiaaa-aaaap-aib2q-cai.icp0.io>
+
+
 ![screenshot](media/screenshot.png)
 
 ## Example, get the balance of an address
