@@ -43,21 +43,21 @@ function Root() {
 
       <div className="links">
         <a
-          href="https://github.com/ic-alloy/ic-alloy-toolbox/graphs/contributors"
+          href="https://github.com/ic-alloy/ic-alloy-toolkit/graphs/contributors"
           target="_blank"
           rel="noreferrer"
         >
           <img src="https://img.shields.io/github/contributors/ic-alloy/ic-alloy-toolkit.svg?style=for-the-badge" />
         </a>
         <a
-          href="https://github.com/ic-alloy/ic-alloy-toolbox"
+          href="https://github.com/ic-alloy/ic-alloy-toolkit"
           target="_blank"
           rel="noreferrer"
         >
           <img src="https://img.shields.io/github/license/ic-alloy/ic-alloy-toolkit.svg?style=for-the-badge" />
         </a>
         <a
-          href="https://github.com/ic-alloy/ic-alloy-toolbox/stargazers"
+          href="https://github.com/ic-alloy/ic-alloy-toolkit/stargazers"
           target="_blank"
           rel="noreferrer"
         >
