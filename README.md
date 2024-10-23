@@ -1,24 +1,21 @@
 # Alloy + ICP Toolkit
 
-[Alloy](https://alloy.rs/) is the next generation of Ethereum support libraries,
-written in Rust and designed for scalability and performance. Alloy is a rewrite
-of of [ethers-rs](https://github.com/gakonst/ethers-rs) from the ground up.
-Alloy includes built in support for transports like HTTP, WebSockets and IPC.
+[Alloy](https://alloy.rs/) is the next generation of Ethereum support libraries, written in Rust and designed for scalability and performance. Alloy is a rewrite of of [ethers-rs](https://github.com/gakonst/ethers-rs) from the ground up. Alloy includes built in support for transports like HTTP, WebSockets and IPC.
 
 **Alloy now also works with the Internet Computer (ICP)!**
 
-The Alloy libraries have been forked to add support for ICP as a transport
-layer. This makes it possible to use the full feature set of Alloy from ICP
-canisters.
+The Alloy libraries have been forked to add support for ICP as a transport layer. This makes it possible to use the full feature set of Alloy from ICP canisters.
 
-This repository contains a collection of examples of how to use Alloy in an IC
-context.
+This repository contains a collection of examples of how to use Alloy in an IC context.
 
-- The backend canister interacting with the EVM through Alloy is written in
-  Rust.
+- The backend canister interacting with the EVM through Alloy is written in Rust.
 - The frontend canster uses Vite/React.
 - The ic-alloy fork: <https://github.com/kristoferlund/ic-alloy>
 - Live demo: <https://u4yi6-xiaaa-aaaap-aib2q-cai.icp0.io>
+
+[![Contributors][contributors-shield]][contributors-url]
+[![Forks][forks-shield]][forks-url] [![Stargazers][stars-shield]][stars-url]
+[![Issues][issues-shield]][issues-url] [![MIT License][license-shield]](LICENSE)
 
 ![screenshot](media/screenshot.png)
 
@@ -71,12 +68,23 @@ dfx start --background
 dfx deploy
 ```
 
-## Author
+## Collaborators
 
-- [kristofer@kristoferlund.se](mailto:kristofer@kristoferlund.se)
-- Twitter: [@kristoferlund](https://twitter.com/kristoferlund)
-- Discord: kristoferkristofer
-- Telegram: [@kristoferkristofer](https://t.me/kristoferkristofer)
+<!-- readme: collaborators,contributors -start -->
+<table>
+	<tbody>
+		<tr>
+            <td align="center">
+                <a href="https://github.com/kristoferlund">
+                    <img src="https://avatars.githubusercontent.com/u/9698363?v=4" width="100;" alt="kristoferlund"/>
+                    <br />
+                    <sub><b>Kristofer</b></sub>
+                </a>
+            </td>
+		</tr>
+	<tbody>
+</table>
+<!-- readme: collaborators,contributors -end -->
 
 ## License
 
@@ -87,3 +95,21 @@ details.
 
 Contributions are welcome! Please open an issue or submit a pull request if you
 have any suggestions or improvements.
+
+[contributors-shield]:
+  https://img.shields.io/github/contributors/ic-alloy/ic-alloy-toolkit.svg?style=for-the-badge
+[contributors-url]:
+  https://github.com/ic-alloy/ic-alloy-toolkit/graphs/contributors
+[forks-shield]:
+  https://img.shields.io/github/forks/ic-alloy/ic-alloy-toolkit.svg?style=for-the-badge
+[forks-url]: https://github.com/ic-alloy/ic-alloy-toolkit/network/members
+[stars-shield]:
+  https://img.shields.io/github/stars/ic-alloy/ic-alloy-toolkit?style=for-the-badge
+[stars-url]: https://github.com/ic-alloy/ic-alloy-toolkit/stargazers
+[issues-shield]:
+  https://img.shields.io/github/issues/ic-alloy/ic-alloy-toolkit.svg?style=for-the-badge
+[issues-url]: https://github.com/ic-alloy/ic-alloy-toolkit/issues
+[license-shield]:
+  https://img.shields.io/github/license/ic-alloy/ic-alloy-toolkit.svg?style=for-the-badge
+[license-url]:
+  https://github.com/ic-alloy/ic-alloy-toolkit/blob/master/LICENSE.txt
