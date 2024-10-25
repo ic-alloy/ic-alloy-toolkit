@@ -14,7 +14,7 @@ use ic_cdk::export_candid;
 // latest block number, it is quite likely that a new block gets created during the
 // time it takes for the RPC procider to execute the requests.
 fn get_rpc_service_sepolia() -> RpcService {
-    // Uncomment to use EVM RPC Canister
+    // Uncomment to use EVM RPC Canister instead of RPC proxy
     // RpcService::EthSepolia(EthSepoliaService::Alchemy)
 
     // Below proxy is intended for limited use with this demo, DO NOT use in a
@@ -27,11 +27,11 @@ fn get_rpc_service_sepolia() -> RpcService {
 }
 
 fn get_rpc_service_base() -> RpcService {
-    // Uncomment to use EVM RPC Canister
+    // Uncomment to use EVM RPC Canister instead of RPC proxy
     // RpcService::BaseMainnet(L2MainnetService::Alchemy)
 
     RpcService::Custom(RpcApi {
-        url: "https://ic-alloy-evm-rpc-proxy.kristofer-977.workers.dev/eth-sepolia".to_string(),
+        url: "https://ic-alloy-evm-rpc-proxy.kristofer-977.workers.dev/base-mainnet".to_string(),
         headers: None,
     })
 }
