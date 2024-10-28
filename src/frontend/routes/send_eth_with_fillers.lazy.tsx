@@ -34,7 +34,7 @@ function Page() {
         <button> Menu</button>
       </Link>
       <div className="card">
-        <p>Send 100 wei from the canister eth address to, for the purposes of this demo, back to the canister eth address.</p>
+        <p>Send 100 wei from the canister eth address back to the canister eth address.</p>
         <p><i>If call fails due to lack of funds, top up the canister eth address with some SepoliaEth.</i></p>
         <p><i>Using Alloy fillers sends multiple requests to the RCP. This canister call can take up to a minute to complete, please be patient.</i></p>
         <p>Canister ETH balance: {isFetchingAccountBalance ? <Spinner /> : <b>{accountBalance} wei</b>}</p>

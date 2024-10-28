@@ -6,5 +6,6 @@ mod get_latest_block;
 mod send_eth;
 mod send_eth_with_fillers;
 mod sign_message;
+mod transfer_usdc;
 mod watch_blocks;
 mod watch_usdc_transfer;

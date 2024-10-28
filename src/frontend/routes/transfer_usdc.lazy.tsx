@@ -5,15 +5,20 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import Source from '../components/source'
 import Spinner from '../components/spinner'
 
-export const Route = createLazyFileRoute('/send_eth')({
+export const Route = createLazyFileRoute('/transfer_usdc')({
   component: Page,
 })
+
+function parseUsdcString(usdc?: string) {
+  if (!usdc) return "0";
+  return (Number.parseInt(usdc) / Math.pow(10, 6)).toString();
+}
 
 function Page() {
   const { data: accountBalanceResult, isFetching: isFetchingAccountBalance } =
     useQuery({
-      queryKey: ['accountBalance'],
-      queryFn: () => backend.get_balance([]),
+      queryKey: ['get_balance_usdc'],
+      queryFn: () => backend.get_balance_usdc([]),
     })
 
   const accountBalance =
@@ -26,7 +31,7 @@ function Page() {
     isPending: isSendingTx,
     mutate: sendTx,
   } = useMutation({
-    mutationFn: () => backend.send_eth(),
+    mutationFn: () => backend.transfer_usdc(),
   })
 
   return (
@@ -36,20 +41,19 @@ function Page() {
       </Link>
       <div className="card">
         <p>
-          Send 100 wei from the canister eth address
-          back to the canister eth address.
+          Transfer a small amount of USDC from the canister eth address back to the canister eth address.
         </p>
         <p>
           <i>
             If call fails due to lack of funds, top up the canister eth address
-            with some SepoliaEth.
+            with some Sepolia USDC.
           </i>
         </p>
         <p>
           <i>
-            Instead of using Alloy fillers for nonce handling, the <code>send_eth</code> function
-            implements that manually instead to minimize the number of requests
-            sent to the RPC.
+            Instead of using Alloy fillers for nonce handling, the{' '}
+            <code>transfer_usdc</code> function implements that manually instead to
+            minimize the number of requests sent to the RPC.
           </i>
         </p>
         <p>
@@ -60,14 +64,14 @@ function Page() {
         </p>
 
         <p>
-          Canister ETH balance:{' '}
-          {isFetchingAccountBalance ? <Spinner /> : <b>{accountBalance} wei</b>}
+          Canister USDC balance:{' '}
+          {isFetchingAccountBalance ? <Spinner /> : <b>{parseUsdcString(accountBalance)} USDC</b>}
         </p>
         <button disabled={isSendingTx} onClick={() => void sendTx()}>
-          {isSendingTx ? <Spinner /> : 'send_eth()'}
+          {isSendingTx ? <Spinner /> : 'transfer_usdc()'}
         </button>
         {txResult && <pre>{JSON.stringify(txResult, null, 2)}</pre>}
-        <Source file="send_eth.rs" />
+        <Source file="transfer_usdc.rs" />
       </div>
     </>
   )

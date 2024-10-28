@@ -1,11 +1,11 @@
 use std::cell::RefCell;
 
 use alloy::{
-    network::{EthereumWallet, TransactionBuilder},
-    primitives::U256,
+    network::EthereumWallet,
+    primitives::{address, U256},
     providers::{Provider, ProviderBuilder},
-    rpc::types::request::TransactionRequest,
     signers::Signer,
+    sol,
     transports::icp::IcpConfig,
 };
 
@@ -15,9 +15,15 @@ thread_local! {
     static NONCE: RefCell<Option<u64>> = const { RefCell::new(None) };
 }
 
-/// This function will attempt to send 100 wei to the ethereum address of the canister.
-///
-/// Transfer some SepoliaEth to the canister address before calling this function.
+// Codegen from ABI file to interact with the contract.
+sol!(
+    #[allow(missing_docs, clippy::too_many_arguments)]
+    #[sol(rpc)]
+    USDC,
+    "abi/USDC.json"
+);
+
+/// This function will attempt to transfer a small amount of USDC to the ethereum address of the canister.
 ///
 /// Nonce handling is implemented manually instead of relying on the Alloy built in
 /// `with_recommended_fillers` method. This minimizes the number of requests sent to the
@@ -37,7 +43,7 @@ thread_local! {
 /// the EVM RPC canister yourself on an app subnet with only 13 nodes and your own RPC API key.
 /// Perhaps 3 calls * 13 = 39 fits within the RPC call limits.
 #[ic_cdk::update]
-async fn send_eth() -> Result<String, String> {
+async fn transfer_usdc() -> Result<String, String> {
     // Setup signer
     let signer = create_icp_sepolia_signer().await;
     let address = signer.address();
@@ -46,7 +52,10 @@ async fn send_eth() -> Result<String, String> {
     let wallet = EthereumWallet::from(signer);
     let rpc_service = get_rpc_service_sepolia();
     let config = IcpConfig::new(rpc_service);
-    let provider = ProviderBuilder::new().wallet(wallet).on_icp(config);
+    let provider = ProviderBuilder::new()
+        .with_gas_estimation()
+        .wallet(wallet)
+        .on_icp(config);
 
     // Attempt to get nonce from thread-local storage
     let maybe_nonce = NONCE.with_borrow(|maybe_nonce| {
@@ -61,15 +70,19 @@ async fn send_eth() -> Result<String, String> {
         provider.get_transaction_count(address).await.unwrap_or(0)
     };
 
-    let tx = TransactionRequest::default()
-        .with_to(address)
-        .with_value(U256::from(100))
-        .with_nonce(nonce)
-        .with_gas_limit(21_000)
-        .with_chain_id(11155111);
+    let contract = USDC::new(
+        address!("1c7d4b196cb0c7b01d743fbc6116a902379c7238"),
+        provider.clone(),
+    );
 
-    let transport_result = provider.send_transaction(tx.clone()).await;
-    match transport_result {
+    match contract
+        .transfer(address, U256::from(100))
+        .nonce(nonce)
+        .chain_id(11155111)
+        .from(address)
+        .send()
+        .await
+    {
         Ok(builder) => {
             let node_hash = *builder.tx_hash();
             let tx_response = provider.get_transaction_by_hash(node_hash).await.unwrap();

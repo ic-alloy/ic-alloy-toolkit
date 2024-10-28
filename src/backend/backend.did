@@ -12,6 +12,7 @@ service : {
   send_eth : () -> (Result);
   send_eth_with_fillers : () -> (Result);
   sign_message : (text) -> (Result);
+  transfer_usdc : () -> (Result);
   watch_contract_event : () -> (Result);
   watch_blocks_start : () -> (Result);
   watch_blocks_stop : () -> (Result);
