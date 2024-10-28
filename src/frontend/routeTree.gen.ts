@@ -23,6 +23,7 @@ const SendethwithfillersLazyImport = createFileRoute('/send_eth_with_fillers')()
 const SendethLazyImport = createFileRoute('/send_eth')()
 const GetlatestblockLazyImport = createFileRoute('/get_latest_block')()
 const GetbatchbalancesLazyImport = createFileRoute('/get_batch_balances')()
+const GetbalanceusdcLazyImport = createFileRoute('/get_balance_usdc')()
 const GetbalanceLazyImport = createFileRoute('/get_balance')()
 const GetaddressLazyImport = createFileRoute('/get_address')()
 const IndexLazyImport = createFileRoute('/')()
@@ -72,6 +73,13 @@ const GetbatchbalancesLazyRoute = GetbatchbalancesLazyImport.update({
   import('./routes/get_batch_balances.lazy').then((d) => d.Route),
 )
 
+const GetbalanceusdcLazyRoute = GetbalanceusdcLazyImport.update({
+  path: '/get_balance_usdc',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() =>
+  import('./routes/get_balance_usdc.lazy').then((d) => d.Route),
+)
+
 const GetbalanceLazyRoute = GetbalanceLazyImport.update({
   path: '/get_balance',
   getParentRoute: () => rootRoute,
@@ -110,6 +118,13 @@ declare module '@tanstack/react-router' {
       path: '/get_balance'
       fullPath: '/get_balance'
       preLoaderRoute: typeof GetbalanceLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/get_balance_usdc': {
+      id: '/get_balance_usdc'
+      path: '/get_balance_usdc'
+      fullPath: '/get_balance_usdc'
+      preLoaderRoute: typeof GetbalanceusdcLazyImport
       parentRoute: typeof rootRoute
     }
     '/get_batch_balances': {
@@ -170,6 +185,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexLazyRoute
   '/get_address': typeof GetaddressLazyRoute
   '/get_balance': typeof GetbalanceLazyRoute
+  '/get_balance_usdc': typeof GetbalanceusdcLazyRoute
   '/get_batch_balances': typeof GetbatchbalancesLazyRoute
   '/get_latest_block': typeof GetlatestblockLazyRoute
   '/send_eth': typeof SendethLazyRoute
@@ -183,6 +199,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexLazyRoute
   '/get_address': typeof GetaddressLazyRoute
   '/get_balance': typeof GetbalanceLazyRoute
+  '/get_balance_usdc': typeof GetbalanceusdcLazyRoute
   '/get_batch_balances': typeof GetbatchbalancesLazyRoute
   '/get_latest_block': typeof GetlatestblockLazyRoute
   '/send_eth': typeof SendethLazyRoute
@@ -197,6 +214,7 @@ export interface FileRoutesById {
   '/': typeof IndexLazyRoute
   '/get_address': typeof GetaddressLazyRoute
   '/get_balance': typeof GetbalanceLazyRoute
+  '/get_balance_usdc': typeof GetbalanceusdcLazyRoute
   '/get_batch_balances': typeof GetbatchbalancesLazyRoute
   '/get_latest_block': typeof GetlatestblockLazyRoute
   '/send_eth': typeof SendethLazyRoute
@@ -212,6 +230,7 @@ export interface FileRouteTypes {
     | '/'
     | '/get_address'
     | '/get_balance'
+    | '/get_balance_usdc'
     | '/get_batch_balances'
     | '/get_latest_block'
     | '/send_eth'
@@ -224,6 +243,7 @@ export interface FileRouteTypes {
     | '/'
     | '/get_address'
     | '/get_balance'
+    | '/get_balance_usdc'
     | '/get_batch_balances'
     | '/get_latest_block'
     | '/send_eth'
@@ -236,6 +256,7 @@ export interface FileRouteTypes {
     | '/'
     | '/get_address'
     | '/get_balance'
+    | '/get_balance_usdc'
     | '/get_batch_balances'
     | '/get_latest_block'
     | '/send_eth'
@@ -250,6 +271,7 @@ export interface RootRouteChildren {
   IndexLazyRoute: typeof IndexLazyRoute
   GetaddressLazyRoute: typeof GetaddressLazyRoute
   GetbalanceLazyRoute: typeof GetbalanceLazyRoute
+  GetbalanceusdcLazyRoute: typeof GetbalanceusdcLazyRoute
   GetbatchbalancesLazyRoute: typeof GetbatchbalancesLazyRoute
   GetlatestblockLazyRoute: typeof GetlatestblockLazyRoute
   SendethLazyRoute: typeof SendethLazyRoute
@@ -263,6 +285,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexLazyRoute: IndexLazyRoute,
   GetaddressLazyRoute: GetaddressLazyRoute,
   GetbalanceLazyRoute: GetbalanceLazyRoute,
+  GetbalanceusdcLazyRoute: GetbalanceusdcLazyRoute,
   GetbatchbalancesLazyRoute: GetbatchbalancesLazyRoute,
   GetlatestblockLazyRoute: GetlatestblockLazyRoute,
   SendethLazyRoute: SendethLazyRoute,
@@ -287,6 +310,7 @@ export const routeTree = rootRoute
         "/",
         "/get_address",
         "/get_balance",
+        "/get_balance_usdc",
         "/get_batch_balances",
         "/get_latest_block",
         "/send_eth",
@@ -304,6 +328,9 @@ export const routeTree = rootRoute
     },
     "/get_balance": {
       "filePath": "get_balance.lazy.tsx"
+    },
+    "/get_balance_usdc": {
+      "filePath": "get_balance_usdc.lazy.tsx"
     },
     "/get_batch_balances": {
       "filePath": "get_batch_balances.lazy.tsx"

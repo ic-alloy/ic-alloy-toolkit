@@ -5,6 +5,7 @@ type Result_4 = variant { Ok : nat64; Err : text };
 
 service : {
   get_address : () -> (Result);
+  get_balance_usdc : (opt text) -> (Result);
   get_balance : (opt text) -> (Result);
   get_batch_balances : (vec text) -> (Result);
   get_latest_block : () -> (Result);

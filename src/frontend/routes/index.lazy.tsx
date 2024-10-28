@@ -16,6 +16,9 @@ function Index() {
       <Link to="/get_balance">
         <button>get_balance(address)</button>
       </Link>
+      <Link to="/get_balance_usdc">
+        <button>get_balance_usdc(address)</button>
+      </Link>
       <Link to="/get_batch_balances">
         <button>get_batch_balances([address1, address2])</button>
       </Link>

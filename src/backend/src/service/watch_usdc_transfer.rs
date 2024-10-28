@@ -11,7 +11,6 @@ use alloy::{
     transports::icp::IcpConfig,
 };
 use ic_cdk_timers::TimerId;
-use USDC::Transfer;
 
 const POLL_LIMIT: usize = 3;
 
@@ -105,7 +104,7 @@ async fn watch_usdc_transfer_start() -> Result<String, String> {
         .address(usdt_token_address)
         // By specifying an `event` or `event_signature` we listen for a specific event of the
         // contract. In this case the `Transfer(address,address,uint256)` event.
-        .event(Transfer::SIGNATURE)
+        .event(USDC::Transfer::SIGNATURE)
         .from_block(BlockNumberOrTag::Latest);
 
     // Initialize the poller and start watching
