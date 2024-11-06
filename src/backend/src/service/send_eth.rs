@@ -9,7 +9,7 @@ use alloy::{
     transports::icp::IcpConfig,
 };
 
-use crate::{create_icp_sepolia_signer, get_rpc_service_sepolia};
+use crate::{create_icp_signer, get_rpc_service_sepolia};
 
 thread_local! {
     static NONCE: RefCell<Option<u64>> = const { RefCell::new(None) };
@@ -39,7 +39,7 @@ thread_local! {
 #[ic_cdk::update]
 async fn send_eth() -> Result<String, String> {
     // Setup signer
-    let signer = create_icp_sepolia_signer().await;
+    let signer = create_icp_signer().await;
     let address = signer.address();
 
     // Setup provider

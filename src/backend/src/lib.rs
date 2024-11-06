@@ -46,7 +46,7 @@ fn get_ecdsa_key_name() -> String {
     }
 }
 
-async fn create_icp_sepolia_signer() -> IcpSigner {
+async fn create_icp_signer() -> IcpSigner {
     let ecdsa_key_name = get_ecdsa_key_name();
     IcpSigner::new(vec![], &ecdsa_key_name, None).await.unwrap()
 }
