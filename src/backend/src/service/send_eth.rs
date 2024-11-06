@@ -46,7 +46,10 @@ async fn send_eth() -> Result<String, String> {
     let wallet = EthereumWallet::from(signer);
     let rpc_service = get_rpc_service_sepolia();
     let config = IcpConfig::new(rpc_service);
-    let provider = ProviderBuilder::new().wallet(wallet).on_icp(config);
+    let provider = ProviderBuilder::new()
+        .with_gas_estimation()
+        .wallet(wallet)
+        .on_icp(config);
 
     // Attempt to get nonce from thread-local storage
     let maybe_nonce = NONCE.with_borrow(|maybe_nonce| {
@@ -65,7 +68,6 @@ async fn send_eth() -> Result<String, String> {
         .with_to(address)
         .with_value(U256::from(100))
         .with_nonce(nonce)
-        .with_gas_limit(21_000)
         .with_chain_id(11155111);
 
     let transport_result = provider.send_transaction(tx.clone()).await;
