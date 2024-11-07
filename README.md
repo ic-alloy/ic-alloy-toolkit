@@ -58,18 +58,51 @@ async fn sign_message(message: String) -> Result<String, String> {
 
 [sign_message.rs](src/backend/src/service/sign_message.rs)
 
-## Run locally
+## Setup
+
+There are three main ways to set up the project:
+
+### 1. Using a VS Code devcontainer
+
+The Dev Containers extension lets you use a Docker container as a full-featured development environment. This repository includes a devcontainer configuration that you can use to open the project in a container with all the necessary tools and dependencies pre-installed.
 
 Pre-requisites:
+- [Docker](https://www.docker.com/products/docker-desktop)
+- [Visual Studio Code](https://code.visualstudio.com/)
 
-- Fork the [ic-alloy](https://github.com/kristoferlund/ic-alloy) repository as a
-  sibling to this repository.
-- Check out the `icp` branch in the forked repository.
+Once Docker and Visual Studio Code are installed, you can open the project in a container by clicking the button below:
 
-Run:
+[![Open locally in Dev Containers](https://img.shields.io/static/v1?label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/ic-alloy/ic-alloy-toolkit)
+
+### 2. Setup manually
+
+Pre-requisites:
+- Setup your developer [environment for the Internet Computer](https://internetcomputer.org/docs/current/developer-docs/backend/rust/dev-env).
+
+Once you have the prerequisites installed, you can clone this repository and run the project.
+
+### 3. Using GitHub Codespaces
+
+GitHub Codespaces is an online development environment that runs in your browser. This repository includes a codespace configuration that you can use to open the project in a codespace with all the necessary tools and dependencies pre-installed.
+
+## Running the project
+
+### 1. Start the Internet Computer
 
 ```bash
 dfx start --background
+```
+
+### 2. Install dependencies
+
+```
+corepack enable pnpm 
+pnpm install
+```
+
+### 3. Deploy the canisters
+
+```
 dfx deploy
 ```
 
