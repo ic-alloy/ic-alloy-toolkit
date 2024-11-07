@@ -86,17 +86,7 @@ you can open the project in a container by clicking the button below:
 
 [![Open locally in Dev Containers](https://img.shields.io/static/v1?label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/ic-alloy/ic-alloy-toolkit)
 
-### 2. Setup manually
-
-Pre-requisites:
-
-- Setup your developer
-  [environment for the Internet Computer](https://internetcomputer.org/docs/current/developer-docs/backend/rust/dev-env).
-
-Once you have the prerequisites installed, you can clone this repository and run
-the project.
-
-### 3. Using GitHub Codespaces
+### 2. Using GitHub Codespaces
 
 GitHub Codespaces is an online development environment that runs in your
 browser. This repository includes a codespace configuration that you can use to
@@ -104,6 +94,16 @@ open the project in a codespace with all the necessary tools and dependencies
 pre-installed.
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ic-alloy/ic-alloy-toolkit?quickstart=1)
+
+### 3. Setup manually
+
+Pre-requisites:
+
+- [Local Internet Computer dev environment](https://internetcomputer.org/docs/current/developer-docs/backend/rust/dev-env)
+- [pnpm](https://pnpm.io/installation)
+
+Once you have the prerequisites installed, you can clone this repository and run
+the project.
 
 ## Running the project
 
@@ -114,11 +114,6 @@ dfx start --background
 ```
 
 ### 2. Install dependencies
-
-Pre-requisites
-
-- [pnpm](https://pnpm.io/installation) (`pnpm` comes pre-installed for the dev
-  container and GitHub Codespaces)
 
 ```
 pnpm install
@@ -134,8 +129,8 @@ dfx deploy
 
 <!-- readme: collaborators,contributors -start -->
 <table>
-	<tbody>
-		<tr>
+ <tbody>
+  <tr>
             <td align="center">
                 <a href="https://github.com/kristoferlund">
                     <img src="https://avatars.githubusercontent.com/u/9698363?v=4" width="100;" alt="kristoferlund"/>
@@ -143,8 +138,8 @@ dfx deploy
                     <sub><b>Kristofer</b></sub>
                 </a>
             </td>
-		</tr>
-	<tbody>
+  </tr>
+ <tbody>
 </table>
 <!-- readme: collaborators,contributors -end -->
 
