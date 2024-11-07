@@ -1,14 +1,21 @@
 # Alloy + ICP Toolkit
 
-[Alloy](https://alloy.rs/) is the next generation of Ethereum support libraries, written in Rust and designed for scalability and performance. Alloy is a rewrite of of [ethers-rs](https://github.com/gakonst/ethers-rs) from the ground up. Alloy includes built in support for transports like HTTP, WebSockets and IPC.
+[Alloy](https://alloy.rs/) is the next generation of Ethereum support libraries,
+written in Rust and designed for scalability and performance. Alloy is a rewrite
+of of [ethers-rs](https://github.com/gakonst/ethers-rs) from the ground up.
+Alloy includes built in support for transports like HTTP, WebSockets and IPC.
 
 **Alloy now also works with the Internet Computer (ICP)!**
 
-The Alloy libraries have been forked to add support for ICP as a transport layer. This makes it possible to use the full feature set of Alloy from ICP canisters.
+The Alloy libraries have been forked to add support for ICP as a transport
+layer. This makes it possible to use the full feature set of Alloy from ICP
+canisters.
 
-This repository contains a collection of examples of how to use Alloy in an IC context.
+This repository contains a collection of examples of how to use Alloy in an IC
+context.
 
-- The backend canister interacting with the EVM through Alloy is written in Rust.
+- The backend canister interacting with the EVM through Alloy is written in
+  Rust.
 - The frontend canster uses Vite/React.
 - The ic-alloy fork: <https://github.com/kristoferlund/ic-alloy>
 - Live demo: <https://u4yi6-xiaaa-aaaap-aib2q-cai.icp0.io>
@@ -18,9 +25,8 @@ This repository contains a collection of examples of how to use Alloy in an IC c
 [![Issues][issues-shield]][issues-url] [![MIT License][license-shield]](LICENSE)
 
 > [!TIP]
-> 
+>
 > Live demo: <https://u4yi6-xiaaa-aaaap-aib2q-cai.icp0.io>
-
 
 ![screenshot](media/screenshot.png)
 
@@ -64,26 +70,39 @@ There are three main ways to set up the project:
 
 ### 1. Using a VS Code devcontainer
 
-The Dev Containers extension lets you use a Docker container as a full-featured development environment. This repository includes a devcontainer configuration that you can use to open the project in a container with all the necessary tools and dependencies pre-installed.
+The Dev Containers extension lets you use a Docker container as a full-featured
+development environment. This repository includes a devcontainer configuration
+that you can use to open the project in a container with all the necessary tools
+and dependencies pre-installed.
 
 Pre-requisites:
+
 - [Docker](https://www.docker.com/products/docker-desktop)
 - [Visual Studio Code](https://code.visualstudio.com/)
 
-Once Docker and Visual Studio Code are installed, you can open the project in a container by clicking the button below:
+Once Docker and Visual Studio Code are installed, you can open the project in a
+container by clicking the button below:
 
 [![Open locally in Dev Containers](https://img.shields.io/static/v1?label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/ic-alloy/ic-alloy-toolkit)
 
 ### 2. Setup manually
 
 Pre-requisites:
-- Setup your developer [environment for the Internet Computer](https://internetcomputer.org/docs/current/developer-docs/backend/rust/dev-env).
 
-Once you have the prerequisites installed, you can clone this repository and run the project.
+- Setup your developer
+  [environment for the Internet Computer](https://internetcomputer.org/docs/current/developer-docs/backend/rust/dev-env).
+
+Once you have the prerequisites installed, you can clone this repository and run
+the project.
 
 ### 3. Using GitHub Codespaces
 
-GitHub Codespaces is an online development environment that runs in your browser. This repository includes a codespace configuration that you can use to open the project in a codespace with all the necessary tools and dependencies pre-installed.
+GitHub Codespaces is an online development environment that runs in your
+browser. This repository includes a codespace configuration that you can use to
+open the project in a codespace with all the necessary tools and dependencies
+pre-installed.
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ic-alloy/ic-alloy-toolkit?quickstart=1)
 
 ## Running the project
 
@@ -96,7 +115,7 @@ dfx start --background
 ### 2. Install dependencies
 
 ```
-corepack enable pnpm 
+corepack enable pnpm
 pnpm install
 ```
 
@@ -110,8 +129,8 @@ dfx deploy
 
 <!-- readme: collaborators,contributors -start -->
 <table>
-	<tbody>
-		<tr>
+ <tbody>
+  <tr>
             <td align="center">
                 <a href="https://github.com/kristoferlund">
                     <img src="https://avatars.githubusercontent.com/u/9698363?v=4" width="100;" alt="kristoferlund"/>
@@ -119,8 +138,8 @@ dfx deploy
                     <sub><b>Kristofer</b></sub>
                 </a>
             </td>
-		</tr>
-	<tbody>
+  </tr>
+ <tbody>
 </table>
 <!-- readme: collaborators,contributors -end -->
 
