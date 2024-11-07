@@ -68,20 +68,21 @@ async fn sign_message(message: String) -> Result<String, String> {
 
 There are three main ways to set up the project:
 
-### 1. Using a VS Code devcontainer
+### 1. Using a VS Code Dev Container
 
-The Dev Containers extension lets you use a Docker container as a full-featured
-development environment. This repository includes a devcontainer configuration
-that you can use to open the project in a container with all the necessary tools
-and dependencies pre-installed.
+The dev containers extension lets you use a Docker container as a full-featured
+development environment. This repository includes a dev container configuration
+that you can use to open the project with all the necessary tools and
+dependencies pre-installed.
 
 Pre-requisites:
 
 - [Docker](https://www.docker.com/products/docker-desktop)
 - [Visual Studio Code](https://code.visualstudio.com/)
+- [Dev Containers Extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
 
-Once Docker and Visual Studio Code are installed, you can open the project in a
-container by clicking the button below:
+Once Docker, Visual Studio Code and the Dev Containers Extension are installed,
+you can open the project in a container by clicking the button below:
 
 [![Open locally in Dev Containers](https://img.shields.io/static/v1?label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/ic-alloy/ic-alloy-toolkit)
 
@@ -114,8 +115,12 @@ dfx start --background
 
 ### 2. Install dependencies
 
+Pre-requisites
+
+- [pnpm](https://pnpm.io/installation) (`pnpm` comes pre-installed for the dev
+  container and GitHub Codespaces)
+
 ```
-corepack enable pnpm
 pnpm install
 ```
 
