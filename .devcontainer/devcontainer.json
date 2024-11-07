@@ -1,6 +1,8 @@
 {
   "name": "ic-alloy-toolkit",
-  "image": "ghcr.io/dfinity/icp-dev-env:13",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
   "forwardPorts": [
     4943
   ],
