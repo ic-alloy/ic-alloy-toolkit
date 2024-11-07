@@ -129,6 +129,13 @@ dfx deploy
                     <sub><b>Kristofer</b></sub>
                 </a>
             </td>
+            <td align="center">
+                <a href="https://github.com/domwoe">
+                    <img src="https://avatars.githubusercontent.com/u/1970182?v=4" width="100;" alt="domwoe"/>
+                    <br />
+                    <sub><b>Dominic Wörner</b></sub>
+                </a>
+            </td>
 		</tr>
 	<tbody>
 </table>
