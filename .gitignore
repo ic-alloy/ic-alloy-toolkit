@@ -31,7 +31,6 @@ dist-ssr
 #IC
 .env
 .dfx
-src/backend/declarations
 src/frontend/declarations
 src/evm_rpc
 target

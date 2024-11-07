@@ -1,0 +1,27 @@
+type Result = variant { Ok : text; Err : text };
+type Result_2 = variant { Ok : bool; Err : text };
+type Result_3 = variant { Ok : vec text; Err : text };
+type Result_4 = variant { Ok : nat64; Err : text };
+
+service : {
+  get_address : () -> (Result);
+  get_balance_usdc : (opt text) -> (Result);
+  get_balance : (opt text) -> (Result);
+  get_batch_balances : (vec text) -> (Result);
+  get_latest_block : () -> (Result);
+  send_eth : () -> (Result);
+  send_eth_with_fillers : () -> (Result);
+  sign_message : (text) -> (Result);
+  transfer_usdc : () -> (Result);
+  watch_contract_event : () -> (Result);
+  watch_blocks_start : () -> (Result);
+  watch_blocks_stop : () -> (Result);
+  watch_blocks_is_polling : () -> (Result_2) query;
+  watch_blocks_poll_count : () -> (Result_4) query;
+  watch_blocks_get : () -> (Result_3) query;
+  watch_usdc_transfer_start : () -> (Result);
+  watch_usdc_transfer_stop : () -> (Result);
+  watch_usdc_transfer_is_polling : () -> (Result_2) query;
+  watch_usdc_transfer_poll_count : () -> (Result_4) query;
+  watch_usdc_transfer_get : () -> (Result_3) query;
+}
