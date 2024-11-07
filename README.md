@@ -66,7 +66,7 @@ async fn sign_message(message: String) -> Result<String, String> {
 
 ## Setup
 
-There are three main ways to set up the project:
+There are two main ways to set up and run the project:
 
 ### 1. Using a VS Code Dev Container
 
@@ -86,16 +86,7 @@ you can open the project in a container by clicking the button below:
 
 [![Open locally in Dev Containers](https://img.shields.io/static/v1?label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/ic-alloy/ic-alloy-toolkit)
 
-### 2. Using GitHub Codespaces
-
-GitHub Codespaces is an online development environment that runs in your
-browser. This repository includes a codespace configuration that you can use to
-open the project in a codespace with all the necessary tools and dependencies
-pre-installed.
-
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ic-alloy/ic-alloy-toolkit?quickstart=1)
-
-### 3. Setup manually
+### 2. Setup manually
 
 Pre-requisites:
 
