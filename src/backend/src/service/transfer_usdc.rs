@@ -1,5 +1,7 @@
+use candid::{Deserialize, CandidType};
+use ic_cdk::{update, query};
 use std::cell::RefCell;
-
+use std::collections::HashMap;
 use alloy::{
     network::EthereumWallet,
     primitives::{address, U256},
@@ -8,98 +10,226 @@ use alloy::{
     sol,
     transports::icp::IcpConfig,
 };
+use ic_crypto_internal_bls12_381_vetkd::{
+    DerivationPath, DerivedPublicKey, EncryptedKey, VetKDEncryptedKeyReply, VetKDPublicKeyReply
+};
 
-use crate::{create_icp_signer, get_rpc_service_sepolia};
+// Codegen from ABI file for DAO contract
+sol! {
+    #[allow(missing_docs)]
+    #[sol(rpc)]
+    DAO,
+    r#"[
+        {
+            "inputs": [],
+            "name": "getMembers",
+            "outputs": [{"type": "address[]", "name": ""}],
+            "stateMutability": "view",
+            "type": "function"
+        }
+    ]"#
+}
 
+// Types for our storage
+#[derive(Clone, Debug, CandidType, Deserialize)]
+struct SecretMetadata {
+    dao_address: String,
+    derivation_path: Vec<Vec<u8>>,
+}
+
+#[derive(Debug, CandidType, Deserialize)]
+enum DaoError {
+    ContractError(String),
+    SecretNotFound(String),
+    InvalidData(String),
+    NotMember(String),
+}
+
+// Thread-local storage
 thread_local! {
+    static SECRETS: RefCell<HashMap<String, SecretMetadata>> = RefCell::new(HashMap::new());
+    static DAO_MEMBERS_CACHE: RefCell<HashMap<String, (Vec<String>, u64)>> = RefCell::new(HashMap::new());
     static NONCE: RefCell<Option<u64>> = const { RefCell::new(None) };
 }
 
-// Codegen from ABI file to interact with the contract.
-sol!(
-    #[allow(missing_docs, clippy::too_many_arguments)]
-    #[sol(rpc)]
-    USDC,
-    "abi/USDC.json"
-);
+const CACHE_DURATION: u64 = 3600; // 1 hour in seconds
 
-/// This function will attempt to transfer a small amount of USDC to the ethereum address of the canister.
-///
-/// Nonce handling is implemented manually instead of relying on the Alloy built in
-/// `with_recommended_fillers` method. This minimizes the number of requests sent to the
-/// EVM RPC.
-///
-/// The following RPC calls are made to complete a transaction:
-/// - `eth_getTransactionCount`: To determine the next nonce. This call is only made once after
-/// canister deployment, then the nonces are cached.
-/// - `eth_estimateGas`: To determine the gas limit
-/// - `eth_sendRawTransaction`: The transaction
-/// - `eth_getTransactionByHash`: To determine if transaction was successful. Increment nonce only
-/// if transaction was successful.
-///
-/// Even though this function makes half as many RPC calls as `send_eth_with_fillers` it is still
-/// recommended to use a deduplication proxy between the EVM RPC canister and the RPC provider
-/// (Alchemy, etc). For a fully decentralised deployment, one option is also to deploy a copy of
-/// the EVM RPC canister yourself on an app subnet with only 13 nodes and your own RPC API key.
-/// Perhaps 3 calls * 13 = 39 fits within the RPC call limits.
-#[ic_cdk::update]
-async fn transfer_usdc() -> Result<String, String> {
-    // Setup signer
-    let signer = create_icp_signer().await;
-    let address = signer.address();
+/// Sets up a new secret for a DAO
+#[update]
+async fn set_secret(
+    dao_address: String,
+    secret_id: String,
+    derivation_path: Vec<Vec<u8>>,
+) -> Result<(), String> {
+    // Validate inputs
+    if secret_id.is_empty() {
+        return Err("Secret ID cannot be empty".to_string());
+    }
+    
+    // Verify DAO exists by checking if we can read members
+    match read_dao_members(&dao_address).await {
+        Ok(_) => (),
+        Err(e) => return Err(format!("Invalid DAO address: {}", e)),
+    }
+    
+    // Store metadata
+    SECRETS.with_borrow_mut(|secrets| {
+        secrets.insert(
+            secret_id.clone(),
+            SecretMetadata {
+                dao_address,
+                derivation_path,
+            },
+        );
+    });
+
+    Ok(())
+}
+
+/// Gets the public key for encrypting data for a specific secret
+#[update]
+async fn get_public_key(
+    secret_id: String,
+    requester_address: String
+) -> Result<VetKDPublicKeyReply, String> {
+    // Verify requester is DAO member
+    let metadata = SECRETS.with_borrow(|secrets| {
+        secrets.get(&secret_id).cloned()
+    }).ok_or_else(|| "Secret not found".to_string())?;
+
+    let is_member = is_dao_member(&metadata.dao_address, &requester_address).await?;
+    if !is_member {
+        return Err("Requester is not a DAO member".to_string());
+    }
+
+    // Create request for vetkd system
+    let request = VetKDPublicKeyRequest {
+        canister_id: None,
+        derivation_path: metadata.derivation_path,
+        key_id: VetKDKeyId {
+            curve: VetKDCurve::Bls12_381,
+            name: "test_key_1".to_string(),
+        },
+    };
+
+    // Get public key from vetkd system
+    vetkd_public_key(request).await
+}
+
+/// Gets the encrypted key for a specific secret
+#[update]
+async fn get_encrypted_key(
+    secret_id: String,
+    requester_address: String,
+    encryption_public_key: Vec<u8>,
+    derivation_id: Vec<u8>,
+) -> Result<VetKDEncryptedKeyReply, String> {
+    // Verify requester is DAO member
+    let metadata = SECRETS.with_borrow(|secrets| {
+        secrets.get(&secret_id).cloned()
+    }).ok_or_else(|| "Secret not found".to_string())?;
+
+    let is_member = is_dao_member(&metadata.dao_address, &requester_address).await?;
+    if !is_member {
+        return Err("Requester is not a DAO member".to_string());
+    }
+
+    // Create request for vetkd system
+    let request = VetKDEncryptedKeyRequest {
+        encryption_public_key,
+        public_key_derivation_path: metadata.derivation_path,
+        derivation_id,
+        key_id: VetKDKeyId {
+            curve: VetKDCurve::Bls12_381,
+            name: "test_key_1".to_string(),
+        },
+    };
+
+    // Get encrypted key from vetkd system
+    vetkd_encrypted_key(request).await
+}
+
+/// Read members from DAO contract with caching
+async fn read_dao_members(dao_address: &str) -> Result<Vec<String>, String> {
+    // Check cache first
+    let current_time = ic_cdk::api::time();
+    let cached_data = DAO_MEMBERS_CACHE.with_borrow(|cache| {
+        cache.get(dao_address).and_then(|(members, timestamp)| {
+            if current_time - timestamp < CACHE_DURATION {
+                Some(members.clone())
+            } else {
+                None
+            }
+        })
+    });
+
+    if let Some(members) = cached_data {
+        return Ok(members);
+    }
 
     // Setup provider
+    let signer = create_icp_signer().await?;
+    let provider = setup_provider(signer).await?;
+
+    // Create contract instance
+    let contract = DAO::new(
+        dao_address.parse().map_err(|e| format!("Invalid address: {}", e))?,
+        provider,
+    );
+
+    // Call getMembers
+    match contract.get_members().call().await {
+        Ok(members) => {
+            // Update cache
+            let members_str: Vec<String> = members.iter()
+                .map(|addr| format!("{:?}", addr))
+                .collect();
+            
+            DAO_MEMBERS_CACHE.with_borrow_mut(|cache| {
+                cache.insert(dao_address.to_string(), (members_str.clone(), current_time));
+            });
+            
+            Ok(members_str)
+        }
+        Err(e) => Err(format!("Failed to read DAO members: {:?}", e)),
+    }
+}
+
+/// Check if an address is a DAO member
+async fn is_dao_member(dao_address: &str, member_address: &str) -> Result<bool, String> {
+    let members = read_dao_members(dao_address).await?;
+    Ok(members.contains(&member_address.to_string()))
+}
+
+/// Setup provider with signer
+async fn setup_provider(signer: impl Signer) -> Result<Provider, String> {
     let wallet = EthereumWallet::from(signer);
     let rpc_service = get_rpc_service_sepolia();
     let config = IcpConfig::new(rpc_service);
-    let provider = ProviderBuilder::new()
+    
+    Ok(ProviderBuilder::new()
         .with_gas_estimation()
         .wallet(wallet)
-        .on_icp(config);
+        .on_icp(config)
+        .build())
+}
 
-    // Attempt to get nonce from thread-local storage
-    let maybe_nonce = NONCE.with_borrow(|maybe_nonce| {
-        // If a nonce exists, the next nonce to use is latest nonce + 1
-        maybe_nonce.map(|nonce| nonce + 1)
+/// Lists all secret IDs for a given DAO address
+#[query]
+fn list_dao_secrets(dao_address: String) -> Vec<String> {
+    SECRETS.with_borrow(|secrets| {
+        secrets
+            .iter()
+            .filter(|(_, metadata)| metadata.dao_address == dao_address)
+            .map(|(id, _)| id.clone())
+            .collect()
+    })
+}
+
+/// Clear DAO members cache for a specific DAO
+#[update]
+fn clear_dao_cache(dao_address: String) {
+    DAO_MEMBERS_CACHE.with_borrow_mut(|cache| {
+        cache.remove(&dao_address);
     });
-
-    // If no nonce exists, get it from the provider
-    let nonce = if let Some(nonce) = maybe_nonce {
-        nonce
-    } else {
-        provider.get_transaction_count(address).await.unwrap_or(0)
-    };
-
-    let contract = USDC::new(
-        address!("1c7d4b196cb0c7b01d743fbc6116a902379c7238"),
-        provider.clone(),
-    );
-
-    match contract
-        .transfer(address, U256::from(100))
-        .nonce(nonce)
-        .chain_id(11155111)
-        .from(address)
-        .send()
-        .await
-    {
-        Ok(builder) => {
-            let node_hash = *builder.tx_hash();
-            let tx_response = provider.get_transaction_by_hash(node_hash).await.unwrap();
-
-            match tx_response {
-                Some(tx) => {
-                    // The transaction has been mined and included in a block, the nonce
-                    // has been consumed. Save it to thread-local storage. Next transaction
-                    // for this address will use a nonce that is = this nonce + 1
-                    NONCE.with_borrow_mut(|nonce| {
-                        *nonce = Some(tx.nonce);
-                    });
-                    Ok(format!("{:?}", tx))
-                }
-                None => Err("Could not get transaction.".to_string()),
-            }
-        }
-        Err(e) => Err(format!("{:?}", e)),
-    }
 }

@@ -12,6 +12,12 @@ ic-cdk = "0.16"
 getrandom = { version = "0.2.15", features = ["custom"] }
 rand_chacha = { version = "0.3.1" }
 ic-cdk-timers = "0.10.0"
+serde = "1"
+ic-crypto-internal-bls12-381-vetkd = { git = "https://github.com/dfinity/ic" }
+ic-crypto-internal-bls12-381-type = { git = "https://github.com/dfinity/ic" }
+rand = "0.8"
+lazy_static = "1.4"
+hex = "0.4"
 
 # Use local clone of `ic-alloy`
 # alloy = { path = "../../../ic-alloy/crates/alloy", default-features = false, features = [
