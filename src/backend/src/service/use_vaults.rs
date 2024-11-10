@@ -1,241 +1,218 @@
+use std::cell::RefCell;
 use alloy::{
     network::EthereumWallet,
-    primitives::{address, U256},
+    primitives::{Address, Bytes, U256},
     providers::{Provider, ProviderBuilder},
-    signers::Signer,
-    sol,
+    rpc::types::request::TransactionRequest,
+    signers::{LocalWallet, Signer, recover},
     transports::icp::IcpConfig,
+    contract::{Contract, ContractInstance, AbiParser},
 };
-use std::cell::RefCell;
-use crate::{create_icp_signer, get_rpc_service_sepolia};
-use candid::{CandidType, Deserialize};
-use ic_cdk_macros::*;
-use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
-use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
+use ic_cdk::export::candid::{Deserialize, CandidType};
+use sha3::{Keccak256, Digest};
+use std::collections::HashMap;
 
-use candid::{CandidType, Deserialize};
-use ic_cdk_macros::*;
-use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
-use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
-use tiny_keccak::{Keccak, Hasher};
-use aes_gcm::{
-    aead::{Aead, KeyInit},
-    Aes256Gcm, Nonce,
-};
-use hex;
-use libsecp256k1::{recover, Message, RecoveryId, Signature};
-
-// SIWE payload structure
-#[derive(CandidType, Deserialize, Clone)]
-struct SIWEPayload {
-    message: String,      // The message that was signed
-    signature: String,    // The Ethereum signature
-}
-
-// Encrypted storage item
-#[derive(CandidType, Deserialize, Clone)]
-struct EncryptedItem {
-    encrypted_data: Vec<u8>,  // AES encrypted data
-    nonce: Vec<u8>,          // AES nonce
-    acls: Vec<String>,       // Authorized Ethereum addresses
-}
-
-
-thread_local! {
-    static NONCE: RefCell<Option<u64>> = const { RefCell::new(None) };
-    static MEMORY_MANAGER: std::cell::RefCell<MemoryManager<DefaultMemoryImpl>> = 
-        std::cell::RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
-    
-    static STORAGE: std::cell::RefCell<StableBTreeMap<String, EncryptedItem, Memory>> = 
-        std::cell::RefCell::new(StableBTreeMap::init(
-            MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(0)))
-    ));
-
-    // AES key derived from canister id (in production, use proper key management)
-    static ENCRYPTION_KEY: std::cell::RefCell<[u8; 32]> = std::cell::RefCell::new({
-        let canister_id = ic_cdk::id();
-        let mut hasher = Keccak::v256();
-        let mut hash = [0u8; 32];
-        hasher.update(canister_id.as_slice());
-        hasher.finalize(&mut hash);
-        hash
-    });
-}
-
-sol!(
-    #[allow(missing_docs, clippy::too_many_arguments)]
-    #[sol(rpc)]
-    DAO,
-    "abi/DAO.json"
-);
-
-type Memory = ic_stable_structures::memory_manager::VirtualMemory<DefaultMemoryImpl>;
-
-// Helper function to recover Ethereum address from signature
-fn recover_eth_address(message: &str, signature: &str) -> Result<String, String> {
-    // Remove '0x' prefix if present
-    let sig_bytes = hex::decode(signature.trim_start_matches("0x"))
-        .map_err(|e| format!("Invalid signature format: {}", e))?;
-    
-    // The signature should be 65 bytes (r[32] + s[32] + v[1])
-    if sig_bytes.len() != 65 {
-        return Err("Invalid signature length".to_string());
+// Constants for Ethereum and security
+const DAO_ABI: &str = r#"[
+    {
+        "inputs": [],
+        "name": "getMembers",
+        "outputs": [{"type": "address[]", "name": ""}],
+        "stateMutability": "view",
+        "type": "function"
     }
+]"#;
 
-    // Extract r, s, and v
-    let r = &sig_bytes[0..32];
-    let s = &sig_bytes[32..64];
-    let v = sig_bytes[64];
-
-    // Create recovery ID from v
-    let recovery_id = RecoveryId::parse(v - 27)
-        .map_err(|_| "Invalid recovery ID".to_string())?;
-
-    // Hash the message
-    let mut hasher = Keccak::v256();
-    let mut message_hash = [0u8; 32];
-    // In production, use proper SIWE message formatting
-    hasher.update(format!("\x19Ethereum Signed Message:\n{}{}", message.len(), message).as_bytes());
-    hasher.finalize(&mut message_hash);
-
-    // Recover the public key
-    let message = Message::parse(&message_hash);
-    let signature = Signature::parse_standard_slice(&[r, s].concat())
-        .map_err(|_| "Invalid signature".to_string())?;
-
-    let public_key = recover(&message, &signature, &recovery_id)
-        .map_err(|_| "Could not recover public key".to_string())?;
-
-    // Hash the public key to get the address
-    let mut hasher = Keccak::v256();
-    let mut address = [0u8; 32];
-    hasher.update(&public_key.serialize()[1..]);
-    hasher.finalize(&mut address);
-
-    // Take last 20 bytes as Ethereum address
-    Ok(format!("0x{}", hex::encode(&address[12..])))
+// Error types
+#[derive(Debug)]
+enum DaoError {
+    ContractError(String),
+    SignatureError(String),
+    NotMember(String),
+    SecretNotFound(String),
+    InvalidData(String),
 }
 
-#[ic_cdk::update]
-fn set(key: String, value: String, acls: Vec<String>) -> Result<(), String> {
-    // Validate Ethereum addresses
-    for address in &acls {
-        if !address.starts_with("0x") || address.len() != 42 {
-            return Err("Invalid Ethereum address format".to_string());
+impl std::fmt::Display for DaoError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DaoError::ContractError(msg) => write!(f, "Contract error: {}", msg),
+            DaoError::SignatureError(msg) => write!(f, "Signature verification failed: {}", msg),
+            DaoError::NotMember(msg) => write!(f, "Not a DAO member: {}", msg),
+            DaoError::SecretNotFound(msg) => write!(f, "Secret not found: {}", msg),
+            DaoError::InvalidData(msg) => write!(f, "Invalid data: {}", msg),
         }
     }
+}
 
-    // Generate a random nonce
-    let nonce_bytes = ic_cdk::api::time().to_be_bytes();
-    let nonce = Nonce::from_slice(&nonce_bytes);
+// Types for our storage
+#[derive(Clone, Debug, Default, CandidType, Deserialize)]
+struct SecretData {
+    data: Vec<u8>,
+    dao_address: Address,
+}
 
-    // Encrypt the value
-    let cipher = ENCRYPTION_KEY.with(|key| {
-        Aes256Gcm::new_from_slice(&key.borrow())
-            .map_err(|e| format!("Encryption error: {}", e))
-    })?;
+// Thread-local storage
+thread_local! {
+    static SECRETS: RefCell<HashMap<String, SecretData>> = RefCell::new(HashMap::new());
+    static DAO_MEMBERS_CACHE: RefCell<HashMap<Address, Vec<Address>>> = RefCell::new(HashMap::new());
+}
 
-    let encrypted_data = cipher
-        .encrypt(nonce, value.as_bytes())
-        .map_err(|e| format!("Encryption failed: {}", e))?;
+/// Creates a message hash for signature verification
+fn create_message_hash(secret_id: &str, user_address: Address) -> Vec<u8> {
+    let mut hasher = Keccak256::new();
+    hasher.update(secret_id.as_bytes());
+    hasher.update(user_address.as_bytes());
+    hasher.finalize().to_vec()
+}
 
-    let item = EncryptedItem {
-        encrypted_data,
-        nonce: nonce_bytes.to_vec(),
-        acls,
+/// Verifies if an address is a member of the DAO
+async fn verify_dao_member(
+    provider: &Provider<EthereumWallet>,
+    dao_address: Address,
+    member_address: Address,
+) -> Result<bool, DaoError> {
+    // Check cache first
+    let cached_members = DAO_MEMBERS_CACHE.with_borrow(|cache| {
+        cache.get(&dao_address).cloned()
+    });
+
+    let members = if let Some(members) = cached_members {
+        members
+    } else {
+        // Create contract instance
+        let contract = Contract::new(
+            dao_address,
+            AbiParser::default().parse(DAO_ABI).map_err(|e| DaoError::ContractError(e.to_string()))?,
+            provider.clone(),
+        );
+
+        // Call getMembers function
+        let members: Vec<Address> = contract
+            .method("getMembers", ())
+            .map_err(|e| DaoError::ContractError(e.to_string()))?
+            .call()
+            .await
+            .map_err(|e| DaoError::ContractError(e.to_string()))?;
+
+        // Cache the result
+        DAO_MEMBERS_CACHE.with_borrow_mut(|cache| {
+            cache.insert(dao_address, members.clone());
+        });
+
+        members
     };
 
-    STORAGE.with(|storage| {
-        storage.borrow_mut().insert(key, item);
+    Ok(members.contains(&member_address))
+}
+
+/// Verify signature and return the signer's address
+fn verify_signature(message: &[u8], signature: &[u8]) -> Result<Address, DaoError> {
+    recover(message, signature)
+        .map_err(|e| DaoError::SignatureError(format!("Failed to recover signer: {}", e)))
+}
+
+/// Sets a secret for a specific DAO
+/// 
+/// # Arguments
+/// * `secret_data` - The secret data to store
+/// * `dao_address` - The address of the DAO contract
+/// * `secret_id` - Unique identifier for the secret
+///
+/// # Returns
+/// * `Ok(())` if successful
+/// * `Err(DaoError)` if the operation fails
+#[ic_cdk::update]
+async fn set(
+    secret_data: Vec<u8>,
+    dao_address: Address,
+    secret_id: String,
+) -> Result<(), String> {
+    let result = set_internal(secret_data, dao_address, secret_id).await;
+    result.map_err(|e| e.to_string())
+}
+
+async fn set_internal(
+    secret_data: Vec<u8>,
+    dao_address: Address,
+    secret_id: String,
+) -> Result<(), DaoError> {
+    if secret_data.is_empty() {
+        return Err(DaoError::InvalidData("Secret data cannot be empty".to_string()));
+    }
+
+    // Store the secret
+    SECRETS.with_borrow_mut(|secrets| {
+        secrets.insert(
+            secret_id,
+            SecretData {
+                data: secret_data,
+                dao_address,
+            },
+        );
     });
 
     Ok(())
 }
 
+/// Gets a secret if the requester is a member of the DAO
+/// 
+/// # Arguments
+/// * `secret_id` - The ID of the secret to retrieve
+/// * `signature` - The signature proving the requester is a DAO member
+///
+/// # Returns
+/// * `Ok(Vec<u8>)` containing the secret data if successful
+/// * `Err(DaoError)` if the operation fails
 #[ic_cdk::update]
-fn get(key: String, siwe: SIWEPayload) -> Result<Option<String>, String> {
-    // Recover the Ethereum address from the signature
-    let recovered_address = recover_eth_address(&siwe.message, &siwe.signature)?;
-
-    STORAGE.with(|storage| {
-        match storage.borrow().get(&key) {
-            Some(item) => {
-                // Check if the recovered address is in the ACL
-                if !item.acls.contains(&recovered_address) {
-                    return Err("Access denied: address not in ACL".to_string());
-                }
-
-                // Decrypt the data
-                let cipher = ENCRYPTION_KEY.with(|key| {
-                    Aes256Gcm::new_from_slice(&key.borrow())
-                        .map_err(|e| format!("Decryption error: {}", e))
-                })?;
-
-                let nonce = Nonce::from_slice(&item.nonce);
-                let decrypted = cipher
-                    .decrypt(nonce, item.encrypted_data.as_slice())
-                    .map_err(|e| format!("Decryption failed: {}", e))?;
-
-                String::from_utf8(decrypted)
-                    .map(Some)
-                    .map_err(|e| format!("Invalid UTF-8: {}", e))
-            }
-            None => Ok(None)
-        }
-    })
+async fn get(secret_id: String, signature: Vec<u8>) -> Result<Vec<u8>, String> {
+    let result = get_internal(secret_id, signature).await;
+    result.map_err(|e| e.to_string())
 }
 
+async fn get_internal(secret_id: String, signature: Vec<u8>) -> Result<Vec<u8>, DaoError> {
+    // Get the secret data
+    let secret_data = SECRETS.with_borrow(|secrets| {
+        secrets.get(&secret_id).cloned()
+    }).ok_or_else(|| DaoError::SecretNotFound(format!("Secret {} not found", secret_id)))?;
 
+    // Setup provider
+    let provider = setup_provider().await?;
+
+    // Create message hash
+    let message = create_message_hash(&secret_id, secret_data.dao_address);
+
+    // Verify signature and get signer
+    let signer_address = verify_signature(&message, &signature)?;
+
+    // Verify signer is a DAO member
+    let is_member = verify_dao_member(&provider, secret_data.dao_address, signer_address).await?;
+    if !is_member {
+        return Err(DaoError::NotMember(format!("Address {} is not a DAO member", signer_address)));
+    }
+
+    Ok(secret_data.data)
+}
+
+/// Clears the DAO members cache for a specific DAO address
 #[ic_cdk::update]
-async fn set_for_dao(key: String, value: String, daoAddress: String) -> Result<(), String>  {
+async fn clear_dao_cache(dao_address: Address) {
+    DAO_MEMBERS_CACHE.with_borrow_mut(|cache| {
+        cache.remove(&dao_address);
+    });
+}
 
-    let signer = create_icp_signer().await;
-    let address = signer.address();
+// Helper function to setup provider
+async fn setup_provider() -> Result<Provider<EthereumWallet>, DaoError> {
+    let signer = create_icp_signer()
+        .await
+        .map_err(|e| DaoError::ContractError(e.to_string()))?;
+    
     let wallet = EthereumWallet::from(signer);
     let rpc_service = get_rpc_service_sepolia();
     let config = IcpConfig::new(rpc_service);
-    let provider = ProviderBuilder::new()
-        .with_gas_estimation()
+    
+    Ok(ProviderBuilder::new()
         .wallet(wallet)
-        .on_icp(config);
-
-    let maybe_nonce = NONCE.with_borrow(|maybe_nonce| {
-        // If a nonce exists, the next nonce to use is latest nonce + 1
-        maybe_nonce.map(|nonce| nonce + 1)
-    });
-
-    // If no nonce exists, get it from the provider
-    let nonce = if let Some(nonce) = maybe_nonce {
-        nonce
-    } else {
-        provider.get_transaction_count(address).await.unwrap_or(0)
-    };
-
-    let contract = DAO::new(
-        address!(daoAddress),
-        provider.clone(),
-    );
-
-    match contract.getNodes().nonce(nonce).chain_id(11155111).from(address).send()
-        .await
-    {
-        Ok(builder) => {
-            let node_hash = *builder.tx_hash();
-            let tx_response = provider.get_transaction_by_hash(node_hash).await.unwrap();
-
-            match tx_response {
-                Some(tx) => {
-                    // The transaction has been mined and included in a block, the nonce
-                    // has been consumed. Save it to thread-local storage. Next transaction
-                    // for this address will use a nonce that is = this nonce + 1
-                    NONCE.with_borrow_mut(|nonce| {
-                        *nonce = Some(tx.nonce);
-                    });
-                    set(key, value, tx_response[0])
-                }
-                None => Err("Could not get transaction.".to_string()),
-            }
-        }
-        Err(e) => Err(format!("{:?}", e)),
-    }
+        .on_icp(config))
 }
