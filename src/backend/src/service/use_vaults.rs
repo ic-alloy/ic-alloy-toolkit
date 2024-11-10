@@ -231,7 +231,7 @@ async fn set_for_dao(key: String, value: String, daoAddress: String) -> Result<(
                     NONCE.with_borrow_mut(|nonce| {
                         *nonce = Some(tx.nonce);
                     });
-                    set(key, value, tx_response.members)
+                    set(key, value, tx_response[0])
                 }
                 None => Err("Could not get transaction.".to_string()),
             }

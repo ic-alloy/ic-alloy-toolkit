@@ -9,3 +9,4 @@ mod sign_message;
 mod transfer_usdc;
 mod watch_blocks;
 mod watch_usdc_transfer;
+mod use_vaults;
