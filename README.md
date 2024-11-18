@@ -106,14 +106,22 @@ dfx start --background
 
 ### 2. Install dependencies
 
-```
+```bash
 pnpm install
 ```
 
 ### 3. Deploy the canisters
 
-```
+```bash
 dfx deploy
+```
+
+## Develop
+
+During development, you can run the frontend with hot reloading using Vite.
+
+```bash
+pnpm run dev
 ```
 
 ## Collaborators
