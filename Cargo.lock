@@ -706,7 +706,6 @@ dependencies = [
  "getrandom",
  "ic-cdk",
  "ic-cdk-timers",
- "rand_chacha",
 ]
 
 [[package]]

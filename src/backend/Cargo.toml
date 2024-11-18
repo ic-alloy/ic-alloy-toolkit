@@ -10,7 +10,6 @@ crate-type = ["cdylib"]
 candid = "0.10"
 ic-cdk = "0.16"
 getrandom = { version = "0.2.15", features = ["custom"] }
-rand_chacha = { version = "0.3.1" }
 ic-cdk-timers = "0.10.0"
 
 # Use local clone of `ic-alloy`
