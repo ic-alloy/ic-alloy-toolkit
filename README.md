@@ -128,8 +128,8 @@ pnpm run dev
 
 <!-- readme: collaborators,contributors -start -->
 <table>
- <tbody>
-  <tr>
+	<tbody>
+		<tr>
             <td align="center">
                 <a href="https://github.com/kristoferlund">
                     <img src="https://avatars.githubusercontent.com/u/9698363?v=4" width="100;" alt="kristoferlund"/>
@@ -137,8 +137,15 @@ pnpm run dev
                     <sub><b>Kristofer</b></sub>
                 </a>
             </td>
-  </tr>
- <tbody>
+            <td align="center">
+                <a href="https://github.com/domwoe">
+                    <img src="https://avatars.githubusercontent.com/u/1970182?v=4" width="100;" alt="domwoe"/>
+                    <br />
+                    <sub><b>Dominic Wörner</b></sub>
+                </a>
+            </td>
+		</tr>
+	<tbody>
 </table>
 <!-- readme: collaborators,contributors -end -->
 
