@@ -34,4 +34,3 @@ dist-ssr
 src/frontend/declarations
 src/evm_rpc
 target
-canister_ids.json
